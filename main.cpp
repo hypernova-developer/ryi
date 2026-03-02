@@ -1,30 +1,37 @@
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "ryi.h"
 #include "button.h"
-#include "menuitem.h"
 #include "popupmenu.h"
 
 #include "tinyfiledialogs.h"
-#include "license.h"
 #include "build.h"
 
-
-
+void print_usage() {
+    printf("ryi [options]\n");
+    printf("options:\n");
+    printf("\t<dir>       \t- The directory to load images from (Optional)\n");
+    printf("\t-h          \t- Print this help infomation\n");
+    printf("\n");
+    printf("examples:\n");
+    printf("\tryi          \t- Running the executable without any args in a folder with images will cause the it to read all images\n");
+    printf("\tryi images   \t- Loads all images in dir\n");
+}
 
 int main(int argc, char *argv[]) {
 
-    InitWindow(600, 400, "rayimage");
-    SetTargetFPS(60);
-    SetWindowState(FLAG_WINDOW_RESIZABLE);
+    char* flag = (char*)(argc - 1 == 0 ? "." : argv[argc - 1]);
 
-    char* images_path = (char*)(argc == 0 ? "." : argv[argc - 1]);
-    Ryi::load_images(images_path);
+    if (strcmp(flag, "-h") == 0) {
+        print_usage();
+        return 1;
+    }
 
+    Ryi::init(flag);
     auto images = Ryi::images();
 
     auto goLeft = [&images]() {
@@ -109,11 +116,11 @@ int main(int argc, char *argv[]) {
 
     float rotation_factor = 1;
     popupMenu->separator();
-    popupMenu->menu_item("Rotate +10deg", [rotation_factor]() {
+    popupMenu->menu_item("Rotate +1deg", [rotation_factor]() {
         Ryi::rotation += rotation_factor;
         Ryi::rotation = (int)Ryi::rotation % 360;
     });
-    popupMenu->menu_item("Rotate -10deg", [rotation_factor]() {
+    popupMenu->menu_item("Rotate -1deg", [rotation_factor]() {
         Ryi::rotation -= rotation_factor;
         if (Ryi::rotation < 0)
             Ryi::rotation = 360 - Ryi::rotation;
@@ -161,7 +168,6 @@ int main(int argc, char *argv[]) {
 
     while (Ryi::is_running) {
         auto dt = GetFrameTime();
-        auto w = GetScreenWidth();
         auto h = GetScreenHeight();
 
         if (!Ryi::grid_view) {
@@ -185,6 +191,9 @@ int main(int argc, char *argv[]) {
             if (IsKeyPressed(KEY_RIGHT))
                 goRight();
         } else {
+            *okButton->x() = Ryi::dialog_rect.x + Ryi::dialog_rect.width / 2;
+            *okButton->y() = Ryi::dialog_rect.y + Ryi::dialog_rect.height - 40;
+            okButton = okButton->size(30, 20) ;
             okButton->update();
         }
         popupMenu->update();
@@ -198,7 +207,8 @@ int main(int argc, char *argv[]) {
             Ryi::draw_background();
 
             if (Ryi::show_about) {
-                Ryi::draw_about(okButton);
+                Ryi::draw_about();
+                okButton->draw();
             } else if (Ryi::grid_view) {
                 Ryi::draw_grid_view();
             } else {
@@ -208,7 +218,6 @@ int main(int argc, char *argv[]) {
             }
             popupMenu->draw();
 
-            // DrawText(TextFormat("ImageMode: %s", image_mode == ImageMode::CENTERED ? "centered" : "scale"), 5, 5, 13, ORANGE);
             DrawText(TextFormat("%d/%d", Ryi::image_index + 1, images.size() - 1), 5, 5, 13, BLACK);
             DrawText(TextFormat("%d/%d", Ryi::image_index + 1, images.size() - 1), 6, 6, 13, RED);
         }

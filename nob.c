@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
     Nob_Cmd cmd = {0};
     nob_cmd_append(&cmd, "g++");
     nob_cmd_append(&cmd, "-Wall");
+    nob_cmd_append(&cmd, "-Wno-write-strings");
     nob_cmd_append(&cmd, "-ggdb");
     nob_cmd_append(&cmd, "main.cpp");
     nob_cmd_append(&cmd, "button.cpp");

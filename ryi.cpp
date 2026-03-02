@@ -19,7 +19,14 @@ bool Ryi::show_about = false;
 float Ryi::scale_factor = 1;
 float Ryi::rotation = 0;
 ImageMode Ryi::image_mode = ImageMode::SCALE;
+Rectangle Ryi::dialog_rect = {0, 0, 0, 0};
 
+void Ryi::init(char* path) {
+    InitWindow(600, 400, "Ryi");
+    SetTargetFPS(60);
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
+    Ryi::load_images(path);
+}
 
 void Ryi::draw_background() {
     const int GRID_STEP = 20;
@@ -69,37 +76,37 @@ void Ryi::open_app_from_url(char* url) {
     system(command_buffer);
 }
 
-std::vector<RenderImage> Ryi::_images;
+std::vector<RenderImage> Ryi::Ryi::_images;
 void Ryi::load_images(char* path) {
-    _images = RenderImage::load_images_from_dir(path);
+    Ryi::_images = RenderImage::load_images_from_dir(path);
 }
 
 
 std::vector<RenderImage> Ryi::images() {
-    return _images;
+    return Ryi::_images;
 }
 
-void Ryi::draw_about(Button* okButton) {
+void Ryi::draw_about() {
     auto rect = Ryi::get_dest_rect(ImageMode::CENTERED, 1.0f);
     auto h = GetScreenWidth();
 
     rect.x += rect.width / 8;
 
-    DrawText(__LICENSE__, rect.x - rect.width / 8, scroll_y, 12, GetColor(0x66aaccff));
-    scroll_y--;
+    DrawText(__LICENSE__, rect.x - rect.width / 8, Ryi::scroll_y, 12, GetColor(0x66aaccff));
+    Ryi::scroll_y--;
 
-    if (scroll_y >= 10000) scroll_y = h;
+    if (Ryi::scroll_y >= 10000) Ryi::scroll_y = h;
     // if (rect.width > 750) rect.width = 750;
     // if (rect.height > 350) rect.height = 350;
     DrawRectanglePro({rect.x + 5, rect.y + 5, rect.width, rect.height}, {0, 0}, 0, BLACK);
-    DrawRectanglePro(rect, {0, 0}, 0, GetColor(0x2626262ff));
+    DrawRectanglePro(rect, {0, 0}, 0, GetColor(0x262626ff));
 
     int font_size = 20;
     char* about_header = "About Ryi";
     int text_height = MeasureText(about_header, font_size);
     int text_len = strlen(about_header);
     int y = rect.y + text_height * 0.1;
-    DrawText("About Ryi", rect.x + rect.width / 2 - text_len * 6, y, font_size, WHITE);
+    DrawText(about_header, rect.x + rect.width / 2 - text_len * 6, y, font_size, WHITE);
 
     int x = rect.x + 20;
     y += 20;
@@ -120,13 +127,9 @@ void Ryi::draw_about(Button* okButton) {
     y += 20;
     DrawText(TextFormat("Build Platform: %s", __BUILD_ON__), x, y, 12, WHITE);
     y += 20;
-    DrawText(TextFormat("Build Command : %s", __BUILD_COMMAND__), x, y, 12, WHITE);
+    DrawText(TextFormat("Build Command : %s", __BUILD_COMMAND__), x, y, 12, GREEN);
 
-    *okButton->x() = rect.x + rect.width / 2;
-    *okButton->y() = rect.y + rect.height - 40;
-    *okButton->size(30, 20) ;
-
-    okButton->draw();
+    Ryi::dialog_rect = rect;
     if (CheckCollisionPointRec(GetMousePosition(), rect)) {
         DrawRectangleLinesEx(rect, 1, ORANGE);
     }
@@ -136,21 +139,19 @@ void Ryi::draw_grid_view() {
     auto w = GetScreenWidth();
     auto h = GetScreenHeight();
     int i = 0;
-    int grid_size = w / 10;
 
     Rectangle hovered_rect = {0,0,0,0};
     int hovered_index = -1;
-    int grid_w = 60 + w / _images.size();
-    int grid_h = 60 + h / _images.size();
-    if (_images.size() > 0) {
+    int grid_w = 60 + w / Ryi::_images.size();
+    int grid_h = 60 + h / Ryi::_images.size();
+    if (Ryi::_images.size() > 0) {
         for (int y = 10; y < h; y += grid_h) {
             for (int x = 10; x < w; x += grid_w) {
-                if (i == _images.size() - 1)
+                if ((size_t)i == Ryi::_images.size() - 1)
                     goto _out;
 
                 int index = i++;
-                auto image_path = _images[index].path;
-                auto image = _images[index].image;
+                auto image = Ryi::_images[index].image;
                 auto rect = (Rectangle) {(float)x, (float)y, (float)grid_w, (float)grid_h};
                 if ((rect.x + rect.width) > w) {
                     i--;
@@ -189,8 +190,8 @@ void Ryi::draw_grid_view() {
                 hovered_rect.height -= 30;
             }
 
-            auto image = _images[hovered_index].image;
-            auto image_path = _images[hovered_index].path;
+            auto image = Ryi::_images[hovered_index].image;
+            auto image_path = Ryi::_images[hovered_index].path;
             DrawTexturePro(
                 image,
                 {0, 0, (float)image.width, (float)image.height},
@@ -201,7 +202,7 @@ void Ryi::draw_grid_view() {
             );
             //DrawRectanglePro(hovered_rect, {0,0}, rotation, ORANGE);
             DrawText(TextFormat("w: %d, h: %d", image.width, image.height), w - 120, h - 60, 14, RED);
-            DrawText(TextFormat("path: %s   [%d/%d]", image_path, hovered_index + 1, _images.size() - 1), 20, h - 60, 14, RED);
+            DrawText(TextFormat("path: %s   [%d/%d]", image_path, hovered_index + 1, Ryi::_images.size() - 1), 20, h - 60, 14, RED);
             if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) {
                 image_index = hovered_index;
                 grid_view = !grid_view;
@@ -215,20 +216,20 @@ void Ryi::draw_grid_view() {
 }
 
 void Ryi::draw_image_slide() {
-    if (_images.size() > 0) {
-        auto image = _images[image_index].image;
+    if (Ryi::_images.size() > 0) {
+        auto image = Ryi::_images[image_index].image;
         auto rect = Ryi::get_dest_rect(image_mode, scale_factor);
 
         if (image_mode == ImageMode::CENTERED) {
             DrawRectanglePro({rect.x + 5, rect.y + 5, rect.width, rect.height}, {0, 0}, rotation, GetColor(0x000000ee));
         }
         DrawTexturePro(
-        image,
-        {0, 0, (float)image.width, (float)image.height},
-        rect,
-        {0, 0},
-        rotation,
-        WHITE
+            image,
+            {0, 0, (float)image.width, (float)image.height},
+            rect,
+            {0, 0},
+            rotation,
+            WHITE
         );
     }
 }

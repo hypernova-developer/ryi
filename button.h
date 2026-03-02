@@ -1,11 +1,28 @@
+/*
+ * Ryi Image Viewer
+ *
+ * Author: Gama Sibusiso
+ * Date: 02-March-2026
+ *
+ */
+
 #ifndef BUTTON_H
 #define BUTTON_H
 
 #include <raylib.h>
 #include <functional>
 
+/*
+ * ClickHandler Event handler.
+ * Gets called when a UI element with event logic gets triggered.
+ *
+ */
 using ClickHandler = std::function<void()>;
 
+/*
+ * Button UI element.
+ * A button that floats on screen and can be used for anything.
+ */
 struct Button {
 public:
     Button* text(char*);
